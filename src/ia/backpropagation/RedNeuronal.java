@@ -1,6 +1,5 @@
 package ia.backpropagation;
 
-import ia.backpropagation.Neurona.iFuncionActivacion;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -17,6 +16,7 @@ public class RedNeuronal implements Serializable{
 
     private double[] outputs;
 
+    public RedNeuronal(){}
     /**
      * Crea una red neuronal. Un conjunto de capas ocultas y una capa de salida
      * {L1, L2, L3,.. Lout} con tamaños {N1, N2, N3... Nout} y funciones de
@@ -32,15 +32,14 @@ public class RedNeuronal implements Serializable{
         this.rate_training = rate_training;
 
         network = new ArrayList<>();
-        iFuncionActivacion f = buildSigmoideFunction();
 
         int sizeof_left_layer = size_input;
         for (int i = 0; i < num_hidden_layer; i++) {
-            network.add(new Capa(sizeof_left_layer, sizes_of_hidden_layers[i], f));
+            network.add(new Capa(sizeof_left_layer, sizes_of_hidden_layers[i]));
             sizeof_left_layer = sizes_of_hidden_layers[i];
         }
 
-        outputLayer = new Capa(sizeof_left_layer, size_output, f);
+        outputLayer = new Capa(sizeof_left_layer, size_output);
     }
 
     /**
@@ -103,6 +102,7 @@ public class RedNeuronal implements Serializable{
     // Alimenta la red y vacia la salida en el vector de salida de este objeto.
     public void feed_forward(double[] input) {
         try {
+            Guardia.againstNullPointer(this.outputLayer, "Capa de Salida");
             Guardia.againstDifferentSize(input, size_input);
 
             double[] ouputs_from_hidden_layer = null;
@@ -121,8 +121,10 @@ public class RedNeuronal implements Serializable{
         }
     }
 
-    public double calculate_total_error(ArrayList<double[]> training_sets_inputs,
+    public double calculate_total_error(
+            ArrayList<double[]> training_sets_inputs,
             ArrayList<double[]> training_sets_outputs) {
+        
         try {
             Guardia.againstDifferentSize(size_input, size_output, training_sets_inputs, training_sets_outputs);
 
@@ -156,19 +158,6 @@ public class RedNeuronal implements Serializable{
             for (Neurona neuron : outputLayer.getNeuronas()) {
                 total_error += neuron.calculateError(target_output[for_this_neuron++]);
             }
-            
-            System.out.print("Input: ");
-            for (int i = 0; i < input.length; i++) {
-                System.out.format("[%.2f]", input[i]);
-                
-            }
-            
-            System.out.println("\tOutput: ");
-            for (int i = 0; i < outputs.length; i++) {
-                System.out.format("[%.4f]vs[%.4f] \n", outputs[i], target_output[i]);
-                
-            }
-            
             return total_error;
         } catch (Exception ex) {
             Logger.getLogger(RedNeuronal.class.getName()).log(Level.SEVERE, null, ex);
@@ -176,48 +165,6 @@ public class RedNeuronal implements Serializable{
         return 0;
     }
     
-    
-    public void exportRedNeuronalToTxt(String name_file){
-        
-    }
-    
-    public static RedNeuronal loadRedFromTxtFile(String txt_file){
-        
-        return null;
-    }
-
-    public iFuncionActivacion buildSigmoideFunction() {
-        iFuncionActivacion f = new iFuncionActivacion() {
-            @Override
-            public double evalFunction(double net) {
-                return 1.0 / (1 + Math.pow(Math.E, -net));
-            }
-
-            // dyⱼ/dzⱼ = yⱼ * (1 - yⱼ)
-            // The derivative (not partial derivative since there is only one variable) of the output then is:
-            @Override
-            public double evalPartialDerivate(double output) {
-                return output * (1 - output);
-            }
-        };
-        return f;
-    }
-
-    public iFuncionActivacion buildLinealFunction() {
-        iFuncionActivacion f = new iFuncionActivacion() {
-            @Override
-            public double evalFunction(double net) {
-                return net;
-            }
-
-            @Override
-            public double evalPartialDerivate(double net) {
-                return 1.0;
-            }
-        };
-        return f;
-    }
-
     public int getSize_input() {
         return size_input;
     }
@@ -238,5 +185,42 @@ public class RedNeuronal implements Serializable{
         return outputs;
     }
 
+    public Capa getOutputLayer() {
+        return outputLayer;
+    }   
     
+
+    public void setSize_input(int size_input) {
+        this.size_input = size_input;
+    }
+
+    public void setSize_output(int size_output) {
+        this.size_output = size_output;
+    }
+
+    public void setRate_training(double rate_training) {
+        this.rate_training = rate_training;
+    }
+
+    public void setNetwork(ArrayList<Capa> network) {
+        this.network = network;
+    }
+
+    public void setOutputLayer(Capa outputLayer) {
+        this.outputLayer = outputLayer;
+    }
+
+    public void setOutputs(double[] outputs) {
+        this.outputs = outputs;
+    }    
+
+    public void pintarOutput() {
+        int round_value = 0;
+        for (int i = 0; i < outputs.length; i++) {            
+            round_value = outputs[i]<0.5?0:1;
+            
+            System.out.format("[%d]", round_value);
+        }
+        System.out.println();
+    }
 }

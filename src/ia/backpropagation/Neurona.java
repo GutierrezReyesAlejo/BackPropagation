@@ -1,9 +1,11 @@
 package ia.backpropagation;
 
 // Subclasses
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.io.Serializable;
 import java.util.Random;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Neurona implements Serializable{
     // static variables.
     public static Random random;
@@ -12,6 +14,12 @@ public class Neurona implements Serializable{
         random = new Random();
     }
 
+    String funcion = "sigmoide";
+
+    public void setFuncion(String funcion) {
+        this.funcion = funcion;
+    }
+    
     // Setter and getters.
     private double inputsX[];
     private double weights[];
@@ -20,26 +28,27 @@ public class Neurona implements Serializable{
     private double valueNet;
     private double errDelta;
     
-    private iFuncionActivacion functionA;
-
     // Inicializa los pesos.
-    public Neurona(int size_in, double[] X, iFuncionActivacion f) {
+    public Neurona(int size_in, double[] X) {
         output     = 0.0;
         valueNet    = 0.0;
-        errDelta         = 0.0;
-        functionA   = f;
+        errDelta    = 0.0;
         inputsX     = X;
         weights     = new double[size_in];
         
         
+        // TODO. Falta implementar que el usuario ingrese el rango para los numeros aleatorios
         for (int i = 0; i < size_in; i++) {
-            // weights[i] = -2 + (random.nextDouble()*4);
-            weights[i] = -2 + (random.nextDouble()*3.56);
+            weights[i] = random.nextDouble();  // Funciona para el XOR
+            // weights[i] = -2 + (random.nextDouble()*4);  // Funciona para Iris.
+            //weights[i] = (random.nextDouble()*2);  // Funciona para el ejemplo de PDF
         }
     }
+    
+    public Neurona(){}
 
-    public Neurona(int szofx, iFuncionActivacion f) {        
-        this(szofx, null, f);
+    public Neurona(int szofx) {        
+        this(szofx, null);
     }
      
     // E(a) Evaluar la Funcion de Costo o Funcion de Error
@@ -54,17 +63,24 @@ public class Neurona implements Serializable{
             total +=weights[i]*input[i];
         }
         this.valueNet = total;
-        this.output = functionA.evalFunction(total);
+        
+        if (funcion.equals("sigmoide")){
+            this.output = 1.0 / (1 + Math.pow(Math.E, -valueNet));;
+        }else if (funcion.equals("lineal")){
+            this.output = valueNet;
+        }        
         return output;
     }   
 
 
+    // TODO. This works only to Sigmoidal Neurons. xD
     // δ = ∂E/∂zⱼ = ∂E/∂yⱼ * dyⱼ/dzⱼ = (a - t) * a * (1 - a)
     public double calculateDelta(double target) {
         this.errDelta = (this.getOutput() - target) * this.getOutput() * (1 - this.getOutput());
         return errDelta;
     }
     
+    // TODO. This works only to Sigmoidal Neurons too. xD
     // # δ = ∂E/∂zⱼ = dE/dyⱼ * dyⱼ/dzⱼ
     public double calculateDeltaToHiddenNeuron(double total_delta) {
         double delta = total_delta * this.getOutput() * (1 - this.getOutput());
@@ -102,10 +118,6 @@ public class Neurona implements Serializable{
         return inputsX[k];
     }
 
-    public iFuncionActivacion getFunctionA() {
-        return functionA;
-    }
-
     int getWeightsLength() {
         return weights.length;
     }
@@ -124,24 +136,30 @@ public class Neurona implements Serializable{
 
     public double getValueNet() {
         return valueNet;
+    }    
+
+    public static void setRandom(Random random) {
+        Neurona.random = random;
     }
-    
-    
-    
-    /**
-     * 
-     * 
-     * 
-     *      INTERFACES
-     * 
-     * 
-     * 
-     */
-    public interface iFuncionActivacion extends Serializable{
 
-        double evalFunction(double net);
+    public void setInputsX(double[] inputsX) {
+        this.inputsX = inputsX;
+    }
 
-        double evalPartialDerivate(double net);
+    public void setWeights(double[] weights) {
+        this.weights = weights;
+    }
+
+    public void setOutput(double output) {
+        this.output = output;
+    }
+
+    public void setValueNet(double valueNet) {
+        this.valueNet = valueNet;
+    }
+
+    public void setErrDelta(double errDelta) {
+        this.errDelta = errDelta;
     }
 }
 

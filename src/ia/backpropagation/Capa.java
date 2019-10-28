@@ -1,17 +1,21 @@
 package ia.backpropagation;
 
-import ia.backpropagation.Neurona.iFuncionActivacion;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Capa implements Serializable{
     // Getter and Setters.
     ArrayList<Neurona> neuronas;
 
-    public Capa(int sizeof_left_layer, int num_neurons,iFuncionActivacion f) {
+    
+    public Capa(){}
+    
+    public Capa(int sizeof_left_layer, int num_neurons) {
         neuronas = new ArrayList<>();
         for (int i = 0; i < num_neurons; i++) {
-            neuronas.add(new Neurona(sizeof_left_layer,f));
+            neuronas.add(new Neurona(sizeof_left_layer));
         }
     }
 
@@ -38,7 +42,7 @@ public class Capa implements Serializable{
     }
     
 
-    double[] feed_forward(double[] input) {
+    public double[] feed_forward(double[] input) {
         double output[] = new double[this.neuronas.size()];
         int i = 0;
         for (Neurona n : this.neuronas) {
@@ -46,6 +50,8 @@ public class Capa implements Serializable{
         }
         return output;
     }
-    
-    
+
+    public void setNeuronas(ArrayList<Neurona> neuronas) {
+        this.neuronas = neuronas;
+    }
 }
