@@ -30,17 +30,17 @@ public class Neurona implements Serializable{
     
     // Inicializa los pesos.
     public Neurona(int size_in, double[] X) {
+        random = new Random(System.currentTimeMillis());
         output     = 0.0;
         valueNet    = 0.0;
         errDelta    = 0.0;
         inputsX     = X;
         weights     = new double[size_in];
         
-        
         // TODO. Falta implementar que el usuario ingrese el rango para los numeros aleatorios
         for (int i = 0; i < size_in; i++) {
-            weights[i] = random.nextDouble();  // Funciona para el XOR
-            // weights[i] = -2 + (random.nextDouble()*4);  // Funciona para Iris.
+            //weights[i] = random.nextDouble();  // Funciona para el XOR
+             weights[i] = -2 + (random.nextDouble()*4);  // Funciona para Iris.
             //weights[i] = (random.nextDouble()*2);  // Funciona para el ejemplo de PDF
         }
     }
@@ -65,7 +65,7 @@ public class Neurona implements Serializable{
         this.valueNet = total;
         
         if (funcion.equals("sigmoide")){
-            this.output = 1.0 / (1 + Math.pow(Math.E, -valueNet));;
+            this.output = 1.0 / (1 + Math.pow(Math.E, -valueNet));
         }else if (funcion.equals("lineal")){
             this.output = valueNet;
         }        

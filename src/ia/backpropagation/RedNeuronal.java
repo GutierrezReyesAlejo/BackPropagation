@@ -13,6 +13,7 @@ public class RedNeuronal implements Serializable{
     private double rate_training = 0.9;
     private ArrayList<Capa> network;
     private Capa outputLayer;
+    int cont=0;
 
     private double[] outputs;
 
@@ -122,13 +123,16 @@ public class RedNeuronal implements Serializable{
     }
 
     public double calculate_total_error(
+           
             ArrayList<double[]> training_sets_inputs,
             ArrayList<double[]> training_sets_outputs) {
         
         try {
+            cont=0;
             Guardia.againstDifferentSize(size_input, size_output, training_sets_inputs, training_sets_outputs);
 
             double total_error = 0.0;
+            
             for (int i = 0; i < training_sets_inputs.size(); i++) {
                 double input[] = training_sets_inputs.get(i);
                 double out_target[] = training_sets_outputs.get(i);
@@ -136,9 +140,14 @@ public class RedNeuronal implements Serializable{
                 this.feed_forward(input);
 
                 int for_this_neuron = 0;
+                double error_patron=0.0;
                 for (Neurona neuron : outputLayer.getNeuronas()) {
-                    total_error += neuron.calculateError(out_target[for_this_neuron++]);
+                    error_patron += neuron.calculateError(out_target[for_this_neuron++]);
                 }
+                if(error_patron<0.13)
+                    cont++;
+                
+                total_error+=error_patron;
             }
             
             return total_error/training_sets_inputs.size();
@@ -223,4 +232,10 @@ public class RedNeuronal implements Serializable{
         }
         System.out.println();
     }
+
+    public int getCont() {
+        return cont;
+    }
+    
+    
 }
