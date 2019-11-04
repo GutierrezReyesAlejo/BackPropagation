@@ -1,11 +1,28 @@
 package ia.backpropagation;
 
+import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.imageio.ImageIO;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
+import org.opencv.core.Size;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
 public class RedNeuronal implements Serializable{
+    
+    int ancho=94;
+    int alto=138;
 
     // Setters and Getter 
     private int size_input;
@@ -129,7 +146,7 @@ public class RedNeuronal implements Serializable{
         
         try {
             cont=0;
-            Guardia.againstDifferentSize(size_input, size_output, training_sets_inputs, training_sets_outputs);
+            //Guardia.againstDifferentSize(size_input, size_output, training_sets_inputs, training_sets_outputs);
 
             double total_error = 0.0;
             
@@ -156,6 +173,76 @@ public class RedNeuronal implements Serializable{
         }
         return 0;
     }
+    
+    
+    
+    public double[] obtenerArray(Mat imagen){
+        MatOfByte matOfByte = new MatOfByte();
+        Imgcodecs.imencode(".png", imagen, matOfByte); 
+ 
+        byte[] byteArray = matOfByte.toArray();
+        BufferedImage bufImage = null;
+        
+        try {
+            InputStream in = new ByteArrayInputStream(byteArray);
+            bufImage = ImageIO.read(in);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        final byte[] pixels = ((DataBufferByte) bufImage.getRaster().getDataBuffer()).getData();
+        final int width = bufImage.getWidth();
+        final int height = bufImage.getHeight();
+
+        double array[] = new double[height*width];
+        
+        final int pixelLength = 3;
+        int cont=0;
+        for (int pixel = 0, row = 0, col = 0; pixel < pixels.length; pixel += pixelLength) {
+            int argb = 0;
+            //argb += -16777216; // 255 alpha
+            argb += ((int) pixels[pixel] & 0xff); // blue
+            argb += (((int) pixels[pixel + 1] & 0xff) << 8); // green
+            argb += (((int) pixels[pixel + 2] & 0xff) << 16); // red
+            if(argb==0)
+                array[cont]=0;
+            else
+                array[cont]=1;
+            cont++;
+
+            col++;
+            if (col == width) {
+               col = 0;
+               row++;
+            }
+        }
+        
+        return array;
+    }
+    
+    public Mat obtenerImagen(String ruta){
+        Mat imagen = Imgcodecs.imread(ruta, Imgcodecs.IMREAD_ANYCOLOR);
+        
+        Mat gris=new Mat(imagen.width(),imagen.height(),imagen.type());
+        Mat blur=new Mat(imagen.width(),imagen.height(),imagen.type());
+        Mat canny = new Mat(imagen.width(),imagen.height(),imagen.type());
+        
+        Imgproc.cvtColor(imagen, gris, Imgproc.COLOR_RGB2GRAY);
+        Size s = new Size(3,3);
+        int min_threshold=50;
+        int ratio = 3;
+        Imgproc.blur(gris, blur,s);
+        Imgproc.Canny(blur, canny, min_threshold,min_threshold*ratio);
+        Mat imagenredim = new Mat();
+        Size sz = new Size(ancho,alto); //dependera de las imagenes del dataset
+        Imgproc.resize( canny, imagenredim, sz );
+        Mat binario = new Mat(gris.width(),gris.height(),gris.type());
+        Imgproc.threshold(imagenredim, binario, 100, 255, Imgproc.THRESH_BINARY);
+        
+        return binario;
+    }
+    
+    
 
     public double calculate_error_this_training(double input[], double[] target_output) {
         try {

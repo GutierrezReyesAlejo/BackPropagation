@@ -30,7 +30,7 @@ public class Neurona implements Serializable{
     
     // Inicializa los pesos.
     public Neurona(int size_in, double[] X) {
-        random = new Random(System.currentTimeMillis());
+        //random = new Random(System.currentTimeMillis());
         output     = 0.0;
         valueNet    = 0.0;
         errDelta    = 0.0;

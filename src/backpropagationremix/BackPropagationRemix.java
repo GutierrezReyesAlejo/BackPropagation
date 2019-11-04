@@ -2,22 +2,36 @@ package backpropagationremix;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 import ia.backpropagation.RedNeuronal;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
+import org.opencv.core.Size;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
 public class BackPropagationRemix {
+    static int ancho = 94;
+    static int alto = 138;
 
     public static RedNeuronal deserializar(String f) {
         ObjectMapper mapper = new ObjectMapper();
@@ -112,7 +126,9 @@ public class BackPropagationRemix {
         parar=true;
     }
     
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        System.load("C:/opencv/build/java/x64/opencv_java411.dll");
+        
         
         JFrame si = new JFrame();
         JButton boton = new JButton("Parar");
@@ -128,41 +144,34 @@ public class BackPropagationRemix {
         
         Random random = new Random();
         
-        ArrayList<double[]> inputs = new ArrayList<>();
+        ArrayList<String> inputs = new ArrayList<>();
         ArrayList<double[]> outputs = new ArrayList<>();
         
         try {
-            BufferedReader br = new BufferedReader(new FileReader("iris.data"));
+            BufferedReader br = new BufferedReader(new FileReader("imagenes.txt"));
             // Leer matriz entrenamiento.
            // System.out.println(br.lines().count());
             String line = br.readLine();
             
             while (line != null) {
                 String[] tkns = line.split(",");
-                double valsIn[] = new double[tkns.length - 1]; // Omite el ultimo Valor
+                String valsIn=""; // Omite el ultimo Valor
                 for (int j = 0; j < tkns.length - 1; j++) {
-                    valsIn[j] = Double.parseDouble(tkns[j]);
+                    valsIn = tkns[j];
                 }
 
-                double valsOut[] = new double[3]; // Combinaciones del ultimo Valor
+                double valsOut[] = new double[2]; // Combinaciones del ultimo Valor
                 switch (tkns[tkns.length - 1]) {
-                    case "Iris-setosa":
+                    case "0":
                         valsOut[0] = 1;
                         valsOut[1] = 0;
-                        valsOut[2] = 0;
                         break;
-                    case "Iris-versicolor":
+                    case "1":
                         valsOut[0] = 0;
                         valsOut[1] = 1;
-                        valsOut[2] = 0;
-                        break;
-                    case "Iris-virginica":
-                        valsOut[0] = 0;
-                        valsOut[1] = 0;
-                        valsOut[2] = 1;
                         break;
                 }
-                if ( valsOut.length == 3) {
+                if ( valsOut.length == 2) {
                     inputs.add(valsIn);
                     outputs.add(valsOut);
                 }
@@ -188,10 +197,10 @@ public class BackPropagationRemix {
         }
         
         
-        ArrayList<double[]> inputs_training = new ArrayList<>();
+        ArrayList<String> inputs_training = new ArrayList<>();
         ArrayList<double[]> outputs_training = new ArrayList<>();
         
-        ArrayList<double[]> inputs_prueba = new ArrayList<>();
+        ArrayList<String> inputs_prueba = new ArrayList<>();
         ArrayList<double[]> outputs_prueba = new ArrayList<>();
         
         for(int i=0; i<inputs.size(); i++){
@@ -205,45 +214,169 @@ public class BackPropagationRemix {
             }           
         }
         
+        ArrayList<double[]> inputs_training2 = new ArrayList<>();
+        ArrayList<double[]> outputs_training2 = new ArrayList<>();
+        
+        ArrayList<double[]> inputs_prueba2 = new ArrayList<>();
+        ArrayList<double[]> outputs_prueba2 = new ArrayList<>();
+        
+        for(int i=0; i<inputs_training.size(); i++){
+            inputs_training2.add(obtenerArray(obtenerImagen(inputs_training.get(i))));
+            outputs_training2.add(outputs_training.get(i));
+            
+            inputs_prueba2.add(obtenerArray(obtenerImagen(inputs_prueba.get(i))));
+            outputs_prueba2.add(outputs_prueba.get(i));
+        }
+
+        
         /////////////
         
         
         // TODO Creando la Red y 	  No. Capas ocultas | Tamaños de las capas Ocultas                   |nInputs | nOutputs | Tasa aprendizaje
-        RedNeuronal red = new RedNeuronal(3, new int[]{8,4,6}, 4, 3,  0.06);
-        int n = inputs_training.size();
+        int tam=ancho*alto;
+        RedNeuronal red = new RedNeuronal(5, new int[]{350,300,100,50,50}, tam, 2,  0.05);
+        //int n = inputs_training.size();
         double err = 100.0;
         int i = 0;
+        
         do {
-            int x = (int) (Math.random() * n); // Escoge un numero al azar
-            red.train(inputs_training.get(x), outputs_training.get(x));   // Entrena a la red con ese Patron.
-
-            err = red.calculate_total_error(inputs_training, outputs_training);  // Calcula el error promedio Respecto a todos los Patrones.
-            i++;
-            if (i % 10000 == 0) {
-                System.out.format("Error de : %.4f \n", err); // Monitoreando Ando... :v
+            //int x = (int) (Math.random() * n); // Escoge un numero al azar
+            for(int j=0; j<inputs_training2.size(); j++){
+                //double p[] = obtenerArray(   obtenerImagen(inputs_training.get(j)));
+                red.train(inputs_training2.get(j), outputs_training2.get(j));   // Entrena a la red con ese Patron.
             }
+
+            err = red.calculate_total_error(inputs_training2, outputs_training2);  // Calcula el error promedio Respecto a todos los Patrones.
+         //   i++;
+          //  if (i % 100 == 0) {
+                System.out.format("Error de : %.4f \n", err); // Monitoreando Ando... :v
+           // }
         } while (err > 0.01 && !parar);
         System.err.println("\n"+err);
         System.err.println(red.getCont());
 
-        err = red.calculate_total_error(inputs_prueba, outputs_prueba);
+        err = red.calculate_total_error(inputs_prueba2, outputs_prueba);
         System.err.println("\n\n"+err);
         System.err.println(red.getCont());
-        //serializar("Iris-example3.json", red);
+        serializar("ImagenesChidas0y1_3.json", red);
         
         System.err.println("===================================================\n");
-        red.feed_forward(new double[]{4.9,3.0,1.4,0.2});
+        double c[]=obtenerArray(obtenerImagen("numeros/0/0_105.png"));
+        red.feed_forward(c);
+        red.pintarOutput();
+        System.err.println("===================================================\n");
+        c=obtenerArray(obtenerImagen("numeros/0/0_50.png"));
+        red.feed_forward(c);
+        red.pintarOutput();
+        System.err.println("===================================================\n");
+        c=obtenerArray(obtenerImagen("numeros/1/1_41.png"));
+        red.feed_forward(c);
+        red.pintarOutput();
+        System.err.println("===================================================\n");
+        c=obtenerArray(obtenerImagen("numeros/1/1_91.png"));
+        red.feed_forward(c);
         red.pintarOutput();
         si.dispose();
     }
     
-    
-    
+ /*
+    public static void main(String[] args) throws IOException {
+        System.load("C:/opencv/build/java/x64/opencv_java411.dll");
+        RedNeuronal red = deserializar("ImagenesChidas0y1_1.json");
+        
+         System.err.println("===================================================\n");
+        double c[]=obtenerArray(obtenerImagen("numeros/1/1_75.png"));
+        red.feed_forward(c);
+        red.pintarOutput();
+        System.err.println("===================================================\n");
+        c=obtenerArray(obtenerImagen("numeros/1/1_76.png"));
+        red.feed_forward(c);
+        red.pintarOutput();
+        System.err.println("===================================================\n");
+        c=obtenerArray(obtenerImagen("numeros/1/1_77.png"));
+        red.feed_forward(c);
+        red.pintarOutput();
+        System.err.println("===================================================\n");
+        c=obtenerArray(obtenerImagen("numeros/1/1_78.png"));
+        red.feed_forward(c);
+        red.pintarOutput();
+        
+    }
+*/    
     public static boolean seRepite(int pos){
         for(int e : pos_pruebas)
            if(e==pos)
                return true;
         return false;
+    }
+     
+    
+    
+    
+    public static double[] obtenerArray(Mat imagen){
+        MatOfByte matOfByte = new MatOfByte();
+        Imgcodecs.imencode(".png", imagen, matOfByte); 
+ 
+        byte[] byteArray = matOfByte.toArray();
+        BufferedImage bufImage = null;
+        
+        try {
+            InputStream in = new ByteArrayInputStream(byteArray);
+            bufImage = ImageIO.read(in);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        final byte[] pixels = ((DataBufferByte) bufImage.getRaster().getDataBuffer()).getData();
+        final int width = bufImage.getWidth();
+        final int height = bufImage.getHeight();
+
+        double array[] = new double[height*width];
+        
+        final int pixelLength = 3;
+        int cont=0;
+        for (int pixel = 0, row = 0, col = 0; pixel < pixels.length; pixel += pixelLength) {
+            int argb = 0;
+            //argb += -16777216; // 255 alpha
+            argb += ((int) pixels[pixel] & 0xff); // blue
+            argb += (((int) pixels[pixel + 1] & 0xff) << 8); // green
+            argb += (((int) pixels[pixel + 2] & 0xff) << 16); // red
+            if(argb==0)
+                array[cont]=0;
+            else
+                array[cont]=1;
+            cont++;
+
+            col++;
+            if (col == width) {
+               col = 0;
+               row++;
+            }
+        }
+        
+        return array;
+    }
+    
+    public static Mat obtenerImagen(String ruta){
+        Mat imagen = Imgcodecs.imread(ruta, Imgcodecs.IMREAD_ANYCOLOR);
+        
+        Mat gris=new Mat(imagen.width(),imagen.height(),imagen.type());
+        Mat blur=new Mat(imagen.width(),imagen.height(),imagen.type());
+        Mat canny = new Mat(imagen.width(),imagen.height(),imagen.type());
+        
+        Imgproc.cvtColor(imagen, gris, Imgproc.COLOR_RGB2GRAY);
+        Size s = new Size(3,3);
+        int min_threshold=50;
+        int ratio = 3;
+        Imgproc.blur(gris, blur,s);
+        Imgproc.Canny(blur, canny, min_threshold,min_threshold*ratio);
+        Mat imagenredim = new Mat();
+        Size sz = new Size(ancho,alto); //dependera de las imagenes del dataset
+        Imgproc.resize( canny, imagenredim, sz );
+        Mat binario = new Mat(gris.width(),gris.height(),gris.type());
+        Imgproc.threshold(imagenredim, binario, 100, 255, Imgproc.THRESH_BINARY);
+        
+        return binario;
     }
 
 }
