@@ -312,11 +312,16 @@ public class RedNeuronal implements Serializable{
 
     public void pintarOutput() {
         int round_value = 0;
+        int pos=0;
         for (int i = 0; i < outputs.length; i++) {            
             round_value = outputs[i]<0.5?0:1;
             
             System.out.format("[%d]", round_value);
+            if(round_value!=0)
+                   pos=i;
         }
+        
+        System.out.print("   =======   "+pos);
         System.out.println();
     }
 

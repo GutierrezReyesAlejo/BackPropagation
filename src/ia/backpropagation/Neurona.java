@@ -40,7 +40,8 @@ public class Neurona implements Serializable{
         // TODO. Falta implementar que el usuario ingrese el rango para los numeros aleatorios
         for (int i = 0; i < size_in; i++) {
             //weights[i] = random.nextDouble();  // Funciona para el XOR
-             weights[i] = -2 + (random.nextDouble()*4);  // Funciona para Iris.
+             weights[i] = (-1 + (random.nextDouble()*2))/10;  // Funciona para Iris.
+             //System.err.println(weights[i]);
             //weights[i] = (random.nextDouble()*2);  // Funciona para el ejemplo de PDF
         }
     }
